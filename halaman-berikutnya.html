@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Review dan Kirim Fotomu - BGT</title>
-  
+
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
@@ -28,14 +28,14 @@
 
   <!-- Form Upload -->
   <div class="flex-1 overflow-y-auto p-4 space-y-6">
-
     <!-- Foto KTP -->
     <div class="bg-white p-4 rounded-xl shadow-sm border">
       <h2 class="font-semibold text-lg mb-2">Foto e-KTP</h2>
+      <p class="text-green-600 text-sm mb-2">Lihat tutorial</p>
       <div class="flex items-center justify-between">
         <div id="previewKTP" class="w-24 h-24 bg-gray-100 flex items-center justify-center rounded-lg text-gray-400 text-3xl">📷</div>
         <div>
-          <button onclick="openCamera('ktp')" class="border border-green-600 text-green-600 px-4 py-2 rounded-full">Ambil foto</button>
+          <button onclick="openCamera('previewKTP')" class="border border-green-600 text-green-600 px-4 py-2 rounded-full">Ambil foto</button>
           <input type="file" id="fotoKTP" accept="image/*" class="hidden" onchange="previewImage(event, 'previewKTP')">
           <button onclick="document.getElementById('fotoKTP').click()" class="border border-blue-600 text-blue-600 px-4 py-2 rounded-full mt-2">Pilih dari Galeri</button>
         </div>
@@ -48,7 +48,7 @@
       <div class="flex items-center justify-between">
         <div id="previewSelfie" class="w-24 h-24 bg-gray-100 flex items-center justify-center rounded-lg text-gray-400 text-3xl">📷</div>
         <div>
-          <button onclick="openCamera('selfie')" class="border border-green-600 text-green-600 px-4 py-2 rounded-full">Ambil foto</button>
+          <button onclick="openCamera('previewSelfie')" class="border border-green-600 text-green-600 px-4 py-2 rounded-full">Ambil foto</button>
           <input type="file" id="fotoSelfie" accept="image/*" class="hidden" onchange="previewImage(event, 'previewSelfie')">
           <button onclick="document.getElementById('fotoSelfie').click()" class="border border-blue-600 text-blue-600 px-4 py-2 rounded-full mt-2">Pilih dari Galeri</button>
         </div>
@@ -63,13 +63,18 @@
 
   <!-- Tombol Kirim -->
   <div class="p-4 bg-white border-t">
-    <button id="btnKirim" onclick="uploadData()" class="w-full bg-gray-300 text-white py-3 rounded-full font-semibold" disabled>
-      Kirim
-    </button>
+    <button id="btnKirim" onclick="uploadData()" class="w-full bg-gray-300 text-white py-3 rounded-full font-semibold" disabled>Kirim</button>
+  </div>
+
+  <!-- Popup Kamera -->
+  <div id="cameraPopup" class="hidden fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50">
+    <video id="video" autoplay playsinline class="rounded-xl w-11/12 max-w-md"></video>
+    <button onclick="takePhoto()" class="mt-4 bg-green-600 text-white px-5 py-2 rounded-full">📸 Ambil Foto</button>
+    <button onclick="closeCamera()" class="mt-2 text-gray-300 underline">Tutup</button>
   </div>
 
 <script>
-  // --- Firebase ---
+  // --- Konfigurasi Firebase ---
   const firebaseConfig = {
     apiKey: "AIzaSyD3FQbFF5a91MlASpqImTMmGkYvaTcdxm0",
     authDomain: "kadek-ed34e.firebaseapp.com",
@@ -86,82 +91,78 @@
 
   let ktpFile = null;
   let selfieFile = null;
+  let currentTarget = null;
+  let currentStream = null;
 
-  // Fungsi buka kamera & simpan hasilnya
-  function openCamera(type) {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          const video = document.createElement('video');
-          video.srcObject = stream;
-          video.play();
-          video.classList.add("fixed", "inset-0", "z-50", "w-full", "h-full", "object-cover");
-          document.body.appendChild(video);
+  // --- Fungsi Kamera Baru ---
+  async function openCamera(targetId) {
+    currentTarget = targetId;
+    const popup = document.getElementById('cameraPopup');
+    popup.classList.remove('hidden');
+    const video = document.getElementById('video');
 
-          const captureButton = document.createElement('button');
-          captureButton.textContent = "Ambil Gambar";
-          captureButton.className = "fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-2 rounded-full z-50";
-          document.body.appendChild(captureButton);
-
-          captureButton.onclick = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            // Ubah hasil foto ke Blob agar bisa diupload
-            canvas.toBlob(blob => {
-              const file = new File([blob], `${type}.jpg`, { type: "image/jpeg" });
-
-              if (type === 'ktp') {
-                ktpFile = file;
-                document.getElementById('previewKTP').innerHTML = `<img src="${URL.createObjectURL(file)}" class="w-24 h-24 object-cover rounded-lg"/>`;
-              } else {
-                selfieFile = file;
-                document.getElementById('previewSelfie').innerHTML = `<img src="${URL.createObjectURL(file)}" class="w-24 h-24 object-cover rounded-lg"/>`;
-              }
-
-              // Matikan kamera dan hapus elemen
-              stream.getTracks().forEach(track => track.stop());
-              video.remove();
-              captureButton.remove();
-              checkFilesReady();
-            }, 'image/jpeg');
-          };
-        })
-        .catch(err => alert("Tidak bisa mengakses kamera: " + err));
-    } else {
-      alert("Kamera tidak tersedia di perangkat ini.");
+    try {
+      currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = currentStream;
+    } catch (err) {
+      alert("Tidak dapat mengakses kamera. Pastikan izin sudah diberikan.");
+      console.error(err);
+      popup.classList.add('hidden');
     }
   }
 
-  // Preview jika dari galeri
+  function takePhoto() {
+    const video = document.getElementById('video');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg');
+
+    // tampilkan preview
+    document.getElementById(currentTarget).innerHTML = `<img src="${dataUrl}" class="w-24 h-24 object-cover rounded-lg"/>`;
+
+    if (currentTarget === 'previewKTP') ktpFile = dataUrl;
+    if (currentTarget === 'previewSelfie') selfieFile = dataUrl;
+
+    // aktifkan tombol kirim jika dua foto sudah ada
+    if (ktpFile && selfieFile) {
+      const btn = document.getElementById("btnKirim");
+      btn.disabled = false;
+      btn.classList.replace("bg-gray-300", "bg-green-600");
+    }
+
+    closeCamera();
+  }
+
+  function closeCamera() {
+    const popup = document.getElementById('cameraPopup');
+    popup.classList.add('hidden');
+    if (currentStream) {
+      currentStream.getTracks().forEach(track => track.stop());
+    }
+  }
+
+  // --- Preview dari Galeri ---
   function previewImage(event, previewId) {
     const file = event.target.files[0];
-    if (!file) return;
     const reader = new FileReader();
-    reader.onload = e => {
-      document.getElementById(previewId).innerHTML = `<img src="${e.target.result}" class="w-24 h-24 object-cover rounded-lg"/>`;
+    reader.onload = function() {
+      document.getElementById(previewId).innerHTML = `<img src="${reader.result}" class="w-24 h-24 object-cover rounded-lg"/>`;
+      if (previewId === "previewKTP") ktpFile = reader.result;
+      if (previewId === "previewSelfie") selfieFile = reader.result;
+
+      if (ktpFile && selfieFile) {
+        const btn = document.getElementById("btnKirim");
+        btn.disabled = false;
+        btn.classList.replace("bg-gray-300", "bg-green-600");
+      }
     };
     reader.readAsDataURL(file);
-
-    if (previewId === "previewKTP") ktpFile = file;
-    if (previewId === "previewSelfie") selfieFile = file;
-    checkFilesReady();
   }
 
-  // Aktifkan tombol Kirim jika dua foto sudah ada
-  function checkFilesReady() {
-    const btn = document.getElementById("btnKirim");
-    if (ktpFile && selfieFile) {
-      btn.disabled = false;
-      btn.classList.remove("bg-gray-300");
-      btn.classList.add("bg-green-600");
-    }
-  }
-
-  // Upload ke Firebase
+  // --- Upload ke Firebase ---
   async function uploadData() {
     if (!ktpFile || !selfieFile) return alert("Silakan upload semua foto dulu.");
 
@@ -175,15 +176,11 @@
     const selfieRef = storage.ref('verifikasi/' + timestamp + '_selfie.jpg');
 
     try {
-      const [ktpSnap, selfieSnap] = await Promise.all([
-        ktpRef.put(ktpFile),
-        selfieRef.put(selfieFile)
-      ]);
+      await ktpRef.putString(ktpFile, 'data_url');
+      await selfieRef.putString(selfieFile, 'data_url');
 
-      const [ktpURL, selfieURL] = await Promise.all([
-        ktpSnap.ref.getDownloadURL(),
-        selfieSnap.ref.getDownloadURL()
-      ]);
+      const ktpURL = await ktpRef.getDownloadURL();
+      const selfieURL = await selfieRef.getDownloadURL();
 
       await db.ref('verifikasi/' + timestamp).set({
         fotoKTP: ktpURL,
@@ -194,12 +191,11 @@
 
       btn.innerText = "Terkirim ✅";
       alert("Foto berhasil dikirim. Kami akan segera memverifikasi datamu.");
-      window.location.href = "verifikasi-berhasil.html"; // ➤ Redirect setelah sukses
     } catch (error) {
-      console.error("Error upload:", error);
-      alert("Gagal mengirim foto, silakan coba lagi.");
-      btn.innerText = "Kirim";
-      btn.disabled = false;
+      console.error(error);
+      btn.innerText = "Gagal kirim. Coba lagi.";
+      btn.classList.replace("bg-gray-400", "bg-red-600");
+      alert("Gagal mengirim foto. Silakan coba lagi.");
     }
   }
 </script>
