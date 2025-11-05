@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>B Car - Mitra</title>
+  <script type="module">
+    // 🔥 Firebase Configuration
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD3FQbFF5a91MlASpqImTMmGkYvaTcdxm0",
+      authDomain: "kadek-ed34e.firebaseapp.com",
+      databaseURL: "https://kadek-ed34e-default-rtdb.firebaseio.com",
+      projectId: "kadek-ed34e",
+      storageBucket: "kadek-ed34e.firebasestorage.app",
+      messagingSenderId: "65756136303",
+      appId: "1:65756136303:web:6dbe5bc658fadb05ca1e9a",
+      measurementId: "G-5WSR57JC7V"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    // Anda bisa menambahkan logic Firebase lainnya di sini
+  </script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 🔹 Navbar */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      background-color: #ffffff;
+      color: rgb(0, 0, 0);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      z-index: 1000;
+    }
+
+    .navbar .logo-img {
+      height: 28px;
+    }
+
+    .navbar .version {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* 🔹 Main Content */
+    .main-content {
+      flex: 1;
+      padding: 110px 20px 0;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .main-content img {
+      width: 100px;
+      height: auto;
+      margin-bottom: 25px;
+    }
+
+    .main-content h1 {
+      font-size: 22px;
+      color: #007bff;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .main-content p {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 30px;
+      line-height: 1.4;
+    }
+
+    /* 🔹 Bottom Cards */
+    .bottom-cards {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 90%;
+      max-width: 300px;
+      z-index: 1000;
+    }
+
+    .card {
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      font-weight: 600;
+      color: #007bff;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+      font-size: 14px;
+    }
+
+    .card:hover {
+      background-color: #e6f0ff;
+    }
+
+    /* 🔹 Footer */
+    footer {
+      position: fixed;
+      bottom: 10px;
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      font-weight: 500;
+      user-select: none;
+      z-index: 999;
+    }
+
+    /* 🔹 Responsive */
+    @media (max-width: 400px) {
+      .card {
+        font-size: 13px;
+        padding: 12px;
+      }
+      .main-content h1 {
+        font-size: 20px;
+      }
+      .main-content p {
+        font-size: 13px;
+        margin-bottom: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🔹 Navbar -->
+  <nav class="navbar">
+    <img src="bgt.png" alt="Logo BGT" class="logo-img" />
+    <div class="version">V1.103.1</div>
+  </nav>
+
+  <!-- 🔹 Konten Utama -->
+  <div class="main-content">
+    <img src="bgt.png" alt="Logo BGT" />
+    <h1>Halo Mitra B Car</h1>
+    <p>Udah siap beraksi?<br>Yuk masuk untuk mulai terima trip</p>
+  </div>
+
+  <!-- 🔹 Tombol Bawah -->
+  <div class="bottom-cards">
+    <div class="card" onclick="window.location.href='login.html'">Masuk sebagai Mitra Driver</div>
+    <div class="card" style="font-size: 13px;" onclick="window.location.href='pendaftaran.html'">Daftar atau Cek Status Pendaftaran</div>
+  </div>
+
+  <!-- 🔹 Footer -->
+  <footer>hak cipta PT Bali Global Trans</footer>
+
+</body>
+</html>

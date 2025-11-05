@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pilih Kendaraan — B Car</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <style>
+    .card-selected {
+      box-shadow: 0 8px 24px rgba(16,185,129,0.16);
+      border: 1px solid rgba(16,185,129,0.22);
+      transform: translateY(-3px);
+    }
+
+    /* ✅ Popup / Bottom Sheet */
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .popup-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .popup-content {
+      background: #fff;
+      border-radius: 1rem 1rem 0 0;
+      width: 100%;
+      max-width: 420px;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      padding: 1.5rem;
+    }
+    .popup-overlay.active .popup-content {
+      transform: translateY(0);
+    }
+
+    /* 🌿 Bulat Checklist Custom */
+    .check-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #9ca3af; /* gray-400 */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .check-circle.checked {
+      background-color: #10b981; /* green-500 */
+      border-color: #10b981;
+      color: white;
+    }
+    .check-circle i {
+      font-size: 12px;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.2s ease;
+    }
+    .check-circle.checked i {
+      opacity: 1;
+      transform: scale(1);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center">
+
+  <!-- Header -->
+  <header class="w-full bg-white shadow-sm px-4 py-3 flex items-center">
+    <button onclick="history.back()" class="text-gray-600 mr-3">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <h1 class="text-lg font-semibold">Pilih kendaraan</h1>
+  </header>
+
+  <!-- Main -->
+  <main class="w-full max-w-md mt-6 px-4">
+    <section class="bg-white rounded-2xl shadow p-4">
+      <div id="vehicleContainer" class="space-y-3"></div>
+    </section>
+  </main>
+
+  <!-- Popup -->
+  <div id="popup" class="popup-overlay">
+    <div class="popup-content">
+      <div id="popupBody" class="text-gray-700 text-sm leading-relaxed mb-4"></div>
+
+      <button id="popupBtn"
+              class="w-full py-2 rounded-full bg-gray-300 text-gray-500 font-semibold transition-all">
+        Tutup
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // =============== Firebase ===============
+    const firebaseConfig = {
+      apiKey: "AIzaSyD3FQbFF5a91MlASpqImTMmGkYvaTcdxm0",
+      authDomain: "kadek-ed34e.firebaseapp.com",
+      databaseURL: "https://kadek-ed34e-default-rtdb.firebaseio.com",
+      projectId: "kadek-ed34e",
+      storageBucket: "kadek-ed34e.firebasestorage.app",
+      messagingSenderId: "65756136303",
+      appId: "1:65756136303:web:6dbe5bc658fadb05ca1e9a",
+      measurementId: "G-5WSR57JC7V"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // =============== Element DOM ===============
+    const container = document.getElementById('vehicleContainer');
+    const popup = document.getElementById('popup');
+    const popupBody = document.getElementById('popupBody');
+    const popupBtn = document.getElementById('popupBtn');
+
+    let selected = null;
+    let currentUser = null;
+
+    const vehicles = [
+      { id: 'motor', name: 'Motor', desc: 'Cepat & hemat untuk jarak dekat', icon: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png' },
+      { id: 'mobil', name: 'Mobil', desc: 'Nyaman untuk penumpang & barang', icon: 'https://cdn-icons-png.flaticon.com/512/744/744465.png' }
+    ];
+
+    // Render pilihan kendaraan
+    function renderVehicles() {
+      container.innerHTML = '';
+      vehicles.forEach(v => {
+        const card = document.createElement('div');
+        card.className = 'flex items-center justify-between p-3 rounded-2xl border hover:bg-gray-50 cursor-pointer transition';
+        card.innerHTML = `
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
+              <img src="${v.icon}" class="w-8 h-8 object-contain">
+            </div>
+            <div>
+              <div class="font-semibold">${v.name}</div>
+              <div class="text-xs text-gray-500">${v.desc}</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-gray-400"></i>
+        `;
+        card.onclick = () => showPopup(v);
+        container.appendChild(card);
+      });
+    }
+
+    // Show popup
+    function showPopup(vehicle) {
+      selected = vehicle;
+      popup.classList.add('active');
+      popupBtn.disabled = false;
+      popupBtn.classList.remove('bg-green-500','text-white');
+      popupBtn.classList.add('bg-gray-300','text-gray-500');
+      popupBtn.textContent = 'Tutup';
+
+      if (vehicle.id === 'motor') {
+        popupBody.innerHTML = `<p class="text-center font-medium text-gray-700">Motor belum tersedia 🚧</p>`;
+      } else if (vehicle.id === 'mobil') {
+        popupBody.innerHTML = `
+          <p class="font-medium mb-3">Sebelum melanjutkan, pastikan hal berikut:</p>
+
+          <div class="space-y-2">
+            <div class="flex items-center space-x-3">
+              <div class="check-circle"><i class="fa-solid fa-check"></i></div>
+              <span>Pastikan kendaraan plat <strong>DK</strong>.</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="check-circle"><i class="fa-solid fa-check"></i></div>
+              <span>Pastikan surat kendaraan di atas tahun <strong>2018</strong>.</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <div class="check-circle"><i class="fa-solid fa-check"></i></div>
+              <span>Pastikan <strong>STNK</strong> tidak kadaluarsa.</span>
+            </div>
+          </div>
+        `;
+
+        // Tambah interaksi untuk checklist
+        popupBody.querySelectorAll('.check-circle').forEach(c => {
+          c.addEventListener('click', () => {
+            c.classList.toggle('checked');
+            checkAllChecklist();
+          });
+        });
+
+        // Awal: tombol disable
+        popupBtn.disabled = true;
+        popupBtn.textContent = 'Lanjutkan';
+      }
+    }
+
+    // Cek apakah semua checklist aktif
+    function checkAllChecklist() {
+      const all = [...popupBody.querySelectorAll('.check-circle')];
+      const allChecked = all.every(c => c.classList.contains('checked'));
+      if (allChecked) {
+        popupBtn.disabled = false;
+        popupBtn.classList.remove('bg-gray-300','text-gray-500');
+        popupBtn.classList.add('bg-green-500','text-white');
+      } else {
+        popupBtn.disabled = true;
+        popupBtn.classList.remove('bg-green-500','text-white');
+        popupBtn.classList.add('bg-gray-300','text-gray-500');
+      }
+    }
+
+    // Tombol popup
+    popupBtn.addEventListener('click', async () => {
+      if (selected.id === 'motor') {
+        popup.classList.remove('active');
+        return;
+      }
+
+      const allChecked = [...popupBody.querySelectorAll('.check-circle')]
+        .every(c => c.classList.contains('checked'));
+      if (selected.id === 'mobil' && allChecked) {
+        popupBtn.textContent = 'Menyimpan...';
+        popupBtn.disabled = true;
+
+        const payload = {
+          jenis: selected.id,
+          nama: selected.name,
+          waktu: new Date().toISOString()
+        };
+        await db.ref('users/' + currentUser.uid + '/pilihan_kendaraan').set(payload);
+        setTimeout(() => {
+          window.location.href = 'pendaftaranBerlanjut.html';
+        }, 900);
+      }
+    });
+
+    // Klik luar popup untuk menutup
+    popup.addEventListener('click', (e) => {
+      if (e.target === popup) popup.classList.remove('active');
+    });
+
+    renderVehicles();
+    auth.signInAnonymously().then(u => currentUser = u.user);
+  </script>
+</body>
+</html>

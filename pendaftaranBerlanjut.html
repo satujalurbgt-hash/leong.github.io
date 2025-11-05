@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mulai Pendaftaran — B Car</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <style>
+    /* Animasi masuk lembut */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.7s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-between py-10 px-6">
+
+  <!-- Konten utama -->
+  <main class="w-full max-w-md text-center fade-in">
+    
+    <!-- Gambar (nanti bisa diganti src-nya) -->
+    <div class="w-full flex justify-center mb-6">
+      <img id="mainImage" 
+           src="https://cdn-icons-png.flaticon.com/512/3202/3202926.png" 
+           alt="Persiapan Data" 
+           class="w-48 h-48 object-contain drop-shadow-md">
+    </div>
+
+    <!-- Teks utama -->
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">
+      Sudah siap melanjutkan pendaftaran?
+    </h1>
+    <p class="text-gray-600 mb-10">
+      Siapkan semua data diri yang diperlukan untuk proses pendaftaranmu.
+    </p>
+
+    <!-- Tombol mulai -->
+    <button id="btnMulai" 
+            class="w-full bg-green-500 hover:bg-green-600 active:scale-[0.98] text-white font-semibold py-3 rounded-full shadow-md transition-all duration-200">
+      Mulai Sekarang
+    </button>
+
+  </main>
+
+  <!-- Footer kecil -->
+  <footer class="text-xs text-gray-400">
+    © 2025 B Car. Semua hak dilindungi.
+  </footer>
+
+  <script>
+    // Klik tombol mulai -> lanjut ke halaman berikut (misal isi-data.html)
+    document.getElementById('btnMulai').addEventListener('click', () => {
+      window.location.href = 'isi-data.html'; // ubah sesuai halaman lanjutanmu
+    });
+  </script>
+
+</body>
+</html>

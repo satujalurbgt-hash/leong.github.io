@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pilih Kota Operasional</title>
+  <link rel="icon" href="bgt.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/js/all.min.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+  <!-- ✅ Navbar atas (fixed) -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-white shadow">
+    <!-- Bar atas -->
+    <div class="flex items-center p-4 border-b">
+      <button onclick="window.history.back()" class="mr-2 text-xl text-gray-600">
+        <i class="fa fa-arrow-left"></i>
+      </button>
+      <h1 class="text-lg font-bold text-gray-800">Pilih kota operasional</h1>
+    </div>
+
+    <!-- Kolom pencarian -->
+    <div class="p-3">
+      <div class="relative">
+        <i class="fa fa-search absolute left-4 top-3 text-gray-400"></i>
+        <input id="searchCity" type="text" placeholder="Ketik nama kota yang Anda cari"
+          class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500">
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Daftar kota (beri padding agar tidak ketutup navbar atas & bawah) -->
+  <div id="cityList" class="flex-1 overflow-y-auto bg-white pt-32 pb-24"></div>
+
+  <!-- ✅ Navbar bawah (tombol lanjut fixed) -->
+  <div class="fixed bottom-0 left-0 right-0 z-50 bg-gray-100 border-t">
+    <div class="p-4">
+      <button id="btnLanjut"
+        class="w-full py-3 rounded-full bg-gray-300 text-gray-500 font-semibold transition-all"
+        disabled>
+        Lanjut
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ==============================
+    // Konfigurasi Firebase
+    // ==============================
+    const firebaseConfig = {
+      apiKey: "AIzaSyD3FQbFF5a91MlASpqImTMmGkYvaTcdxm0",
+      authDomain: "kadek-ed34e.firebaseapp.com",
+      databaseURL: "https://kadek-ed34e-default-rtdb.firebaseio.com",
+      projectId: "kadek-ed34e",
+      storageBucket: "kadek-ed34e.firebasestorage.app",
+      messagingSenderId: "65756136303",
+      appId: "1:65756136303:web:6dbe5bc658fadb05ca1e9a",
+      measurementId: "G-5WSR57JC7V"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    const cityListEl = document.getElementById('cityList');
+    const searchEl = document.getElementById('searchCity');
+    const btnLanjut = document.getElementById('btnLanjut');
+    let selectedCity = null;
+
+    const allCities = [
+      "BOJONEGORO",
+      "PANGKAL PINANG",
+      "CIREBON",
+      "AMBON",
+      "MERAUKE",
+      "SURABAYA",
+      "KEDIRI",
+      "DENPASAR",
+      "MAKASSAR",
+      "MEDAN",
+      "BANDUNG",
+      "YOGYAKARTA"
+    ];
+
+    function renderCities(list) {
+      cityListEl.innerHTML = "";
+      list.forEach(kota => {
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between px-4 py-3 border-b hover:bg-gray-100 cursor-pointer";
+        row.innerHTML = `
+          <span class="font-semibold text-gray-800">${kota}</span>
+          <input type="radio" name="city" class="form-radio text-green-500" value="${kota}">
+        `;
+        row.addEventListener('click', () => selectCity(kota));
+        cityListEl.appendChild(row);
+      });
+    }
+
+    renderCities(allCities);
+
+    function selectCity(kota) {
+      selectedCity = kota;
+      document.querySelectorAll("input[name='city']").forEach(radio => {
+        radio.checked = (radio.value === kota);
+      });
+      btnLanjut.disabled = false;
+      btnLanjut.classList.remove('bg-gray-300', 'text-gray-500');
+      btnLanjut.classList.add('bg-green-500', 'text-white');
+    }
+
+    searchEl.addEventListener('input', e => {
+      const keyword = e.target.value.toLowerCase();
+      const filtered = allCities.filter(k => k.toLowerCase().includes(keyword));
+      renderCities(filtered);
+    });
+
+    btnLanjut.addEventListener('click', () => {
+      if (!selectedCity) return;
+      const user = firebase.auth().currentUser;
+      if (user) {
+        db.ref("users/" + user.uid + "/kota_operasional").set(selectedCity)
+          .then(() => {
+            btnLanjut.innerText = "Menyimpan...";
+            setTimeout(() => {
+              window.location.href = "verifikasi-driver.html";
+            }, 1000);
+          });
+      } else {
+        alert("Anda belum login.");
+      }
+    });
+
+    auth.signInAnonymously();
+  </script>
+
+</body>
+</html>
